@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Create Account — CineGen AI{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+    <div class="auth-bg">
+        <div class="auth-glow auth-glow-1"></div>
+        <div class="auth-glow auth-glow-2"></div>
+        <div class="hero-noise"></div>
+    </div>
+    <div class="auth-container">
+        <div class="auth-card glass-card">
+            <a href="/" class="auth-logo">
+                <span class="brand-icon">🎬</span>
+                <span class="brand-name">CineGen <span class="brand-accent">AI</span></span>
+            </a>
+            <h1 class="auth-title">Create your studio</h1>
+            <p class="auth-subtitle">Join thousands of filmmakers using CineGen AI</p>
+
+            <div id="auth-error" class="auth-message auth-message-error hidden"></div>
+            <div id="auth-success" class="auth-message auth-message-success hidden"></div>
+
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" class="form-input" placeholder="Stanley Kubrick" required autofocus />
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="you@studio.com" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Min. 6 characters" required />
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" class="form-input" placeholder="••••••••" required />
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-glow" id="register-btn">
+                    <span id="register-btn-text">Create Account</span>
+                    <span id="register-spinner" class="btn-spinner hidden"></span>
+                </button>
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { getAuth, createUserWithEmailAndPassword, updateProfile }
+        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp }
+        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    document.addEventListener("authReady", () => {
+        const auth = window.__auth;
+        const db = window.__db;
+        const errDiv = document.getElementById("auth-error");
+        const sucDiv = document.getElementById("auth-success");
+        const btn = document.getElementById("register-btn");
+        const btnText = document.getElementById("register-btn-text");
+        const spinner = document.getElementById("register-spinner");
+
+        function showError(msg) { errDiv.textContent = msg; errDiv.classList.remove("hidden"); sucDiv.classList.add("hidden"); }
+        function showSuccess(msg) { sucDiv.textContent = msg; sucDiv.classList.remove("hidden"); errDiv.classList.add("hidden"); }
+        function setLoading(s) { btnText.classList.toggle("hidden", s); spinner.classList.toggle("hidden", !s); btn.disabled = s; }
+
+        document.getElementById("register-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            errDiv.classList.add("hidden");
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const confirm = document.getElementById("confirm-password").value;
+            if (password !== confirm) { showError("Passwords do not match."); return; }
+            if (password.length < 6) { showError("Password must be at least 6 characters."); return; }
+            setLoading(true);
+            try {
+                const { user } = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(user, { displayName: name });
+                // Save user to Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid, name, email, role: "user",
+                    created_at: serverTimestamp(), scripts_count: 0, ai_usage: 0
+                });
+                const idToken = await user.getIdToken();
+                await fetch("/api/auth/session", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ idToken, user: { uid: user.uid, email, name } })
+                });
+                showSuccess("Account created! Redirecting to your studio...");
+                setTimeout(() => { window.location.href = "/dashboard"; }, 1200);
+            } catch (err) {
+                const msgs = { "auth/email-already-in-use": "An account with this email already exists.", "auth/weak-password": "Password is too weak.", "auth/invalid-email": "Please enter a valid email address." };
+                showError(msgs[err.code] || "Registration failed. Please try again.");
+                setLoading(false);
+            }
+        });
+    });
+</script>
+{% endblock %}

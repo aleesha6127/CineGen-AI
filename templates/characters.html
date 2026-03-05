@@ -1,0 +1,99 @@
+{% extends "app_layout.html" %}
+{% block title %}Character Builder — CineGen AI{% endblock %}
+{% set active_page = 'characters' %}
+
+{% block page_content %}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Character Builder</h1>
+            <p class="page-sub">Build psychologically complex characters for your story.</p>
+        </div>
+    </div>
+
+    <div class="panel-card" style="max-width:700px;margin-bottom:2rem;">
+        <h2 class="panel-title">Story Context</h2>
+        <div class="form-group">
+            <label>Genre</label>
+            <select class="form-select" id="char-genre">
+                <option>Drama</option>
+                <option>Sci-Fi</option>
+                <option>Thriller</option>
+                <option>Horror</option>
+                <option>Romance</option>
+                <option>Action</option>
+                <option>Comedy</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Story Summary (optional)</label>
+            <textarea class="form-textarea" id="char-summary" rows="4"
+                placeholder="A detective hunting a serial killer discovers the killer knows her deepest secrets..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Number of Characters</label>
+            <select class="form-select" id="char-count">
+                <option value="3">3 Characters</option>
+                <option value="4" selected>4 Characters</option>
+                <option value="5">5 Characters</option>
+                <option value="6">6 Characters</option>
+            </select>
+        </div>
+        <button class="btn btn-primary btn-glow generate-btn" onclick="generateChars()">
+            <span>👥</span> Generate Characters
+        </button>
+    </div>
+
+    <!-- Character Cards -->
+    <div class="characters-grid" id="characters-grid"></div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    async function generateChars() {
+        const overlay = document.getElementById("loading-overlay");
+        overlay.classList.remove("hidden");
+        try {
+            const res = await fetch("/api/generate/characters", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    genre: document.getElementById("char-genre").value,
+                    summary: document.getElementById("char-summary").value,
+                    count: document.getElementById("char-count").value
+                })
+            });
+            const data = await res.json();
+            renderChars(data.characters || []);
+            showToast("Characters generated!", "success");
+        } catch (e) { showToast("Generation failed.", "error"); }
+        finally { overlay.classList.add("hidden"); }
+    }
+
+    function renderChars(chars) {
+        const grid = document.getElementById("characters-grid");
+        grid.innerHTML = "";
+        const roleColors = { Protagonist: "tag-red", Antagonist: "tag-blue", Ally: "tag-dim", Mentor: "tag-dim", Wildcard: "tag-red", Foil: "tag-blue" };
+        chars.forEach((c, i) => {
+            const card = document.createElement("div");
+            card.className = "char-card glass-card";
+            card.style.animationDelay = `${i * 0.12}s`;
+            card.innerHTML = `
+      <div class="char-card-header">
+        <div class="char-avatar">${c.name[0]}</div>
+        <div>
+          <div class="char-name">${c.name}</div>
+          <div class="char-age">Age ${c.age} · <span class="tag ${roleColors[c.role] || 'tag-dim'}">${c.role}</span></div>
+        </div>
+      </div>
+      <div class="char-archetype">${c.archetype}</div>
+      <div class="char-field"><span class="char-field-label">Personality</span><p>${c.personality}</p></div>
+      <div class="char-field"><span class="char-field-label">Motivation</span><p>${c.motivation}</p></div>
+      <div class="char-field"><span class="char-field-label">Internal Conflict</span><p>${c.conflict}</p></div>`;
+            grid.appendChild(card);
+            setTimeout(() => card.classList.add("visible"), i * 120);
+        });
+    }
+</script>
+{% endblock %}

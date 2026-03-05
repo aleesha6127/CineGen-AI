@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="{% if is_admin_page %}admin-shell{% else %}app-shell{% endif %}">
+    {% if is_admin_page %}
+    <aside class="admin-sidebar">
+        <div class="sidebar-header" style="padding: 2rem;">
+            <a href="/" class="sidebar-logo">
+                <span class="brand-icon" style="font-size: 1.5rem;">🎬</span>
+                <span class="brand-name" style="font-size: 1.1rem; font-weight: 800;">CineGen <span
+                        class="brand-accent">AI</span></span>
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <div class="admin-nav-label">Management</div>
+            <a href="#" class="admin-nav-item active" onclick="switchTab('overview')">
+                <span class="admin-nav-icon">📊</span> Overview
+            </a>
+            <a href="#" class="admin-nav-item" onclick="switchTab('users')">
+                <span class="admin-nav-icon">👥</span> Users
+            </a>
+            <a href="#" class="admin-nav-item" onclick="switchTab('scripts')">
+                <span class="admin-nav-icon">📝</span> Scripts
+            </a>
+            <a href="#" class="admin-nav-item" onclick="switchTab('analytics')">
+                <span class="admin-nav-icon">📈</span> Analytics
+            </a>
+        </div>
+
+        <div class="admin-nav-group">
+            <div class="admin-nav-label">System</div>
+            <a href="#" class="admin-nav-item" onclick="switchTab('settings')">
+                <span class="admin-nav-icon">⚙️</span> Settings
+            </a>
+            <a href="/logout" class="admin-nav-item" style="margin-top: auto;">
+                <span class="admin-nav-icon">🚪</span> Logout
+            </a>
+        </div>
+    </aside>
+    {% else %}
+    <!-- Existing Sidebar Code -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-logo">
+                <span class="brand-icon">🎬</span>
+                <span class="brand-name">CineGen <span class="brand-accent">AI</span></span>
+            </a>
+            <button class="sidebar-close" id="sidebar-close" aria-label="Close sidebar">✕</button>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+            </a>
+            <a href="/create-story" class="sidebar-link {% if active_page == 'create_story' %}active{% endif %}">
+                <span class="nav-icon">📝</span><span class="nav-label">Create Story</span>
+            </a>
+            <a href="/my-scripts" class="sidebar-link {% if active_page == 'my_scripts' %}active{% endif %}">
+                <span class="nav-icon">📂</span><span class="nav-label">My Scripts</span>
+            </a>
+            <a href="/characters" class="sidebar-link {% if active_page == 'characters' %}active{% endif %}">
+                <span class="nav-icon">👥</span><span class="nav-label">Characters</span>
+            </a>
+            <a href="/scene-builder" class="sidebar-link {% if active_page == 'scene_builder' %}active{% endif %}">
+                <span class="nav-icon">🎞</span><span class="nav-label">Scene Builder</span>
+            </a>
+            <a href="/soundtrack" class="sidebar-link {% if active_page == 'soundtrack' %}active{% endif %}">
+                <span class="nav-icon">🎵</span><span class="nav-label">Soundtrack</span>
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            {% if user.is_admin %}
+            <a href="/admin" class="sidebar-link {% if active_page == 'admin' %}active{% endif %} sidebar-link-admin">
+                <span class="nav-icon">🧑‍💼</span><span class="nav-label">Admin</span>
+            </a>
+            {% endif %}
+            <a href="/settings" class="sidebar-link {% if active_page == 'settings' %}active{% endif %}">
+                <span class="nav-icon">⚙</span><span class="nav-label">Settings</span>
+            </a>
+            <button class="sidebar-link sidebar-logout" onclick="window.__signOut && window.__signOut()">
+                <span class="nav-icon">🚪</span><span class="nav-label">Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Sidebar Backdrop (mobile) -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    {% endif %}
+
+    <div class="{% if is_admin_page %}admin-main{% else %}main-content{% endif %}">
+        {% if not is_admin_page %}
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open sidebar">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="topbar-right">
+                <div class="topbar-user">
+                    <div class="user-avatar" id="user-avatar">{{ (user.name or 'U')[0]|upper }}</div>
+                    <span class="user-name" id="user-name">{{ user.name or 'Filmmaker' }}</span>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <!-- Page Content -->
+        {% block page_content %}{% endblock %}
+
+    </div><!-- /.main-content/admin-main -->
+</div><!-- /.app-shell/admin-shell -->
+
+{% block page_scripts %}{% endblock %}
+{% endblock %}

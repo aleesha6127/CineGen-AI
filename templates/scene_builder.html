@@ -1,0 +1,108 @@
+{% extends "app_layout.html" %}
+{% block title %}Scene Builder — CineGen AI{% endblock %}
+{% set active_page = 'scene_builder' %}
+
+{% block page_content %}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Scene Architect</h1>
+            <p class="page-sub">Build your film's five-act scene structure with AI guidance.</p>
+        </div>
+        <button class="btn btn-primary btn-glow" onclick="generateScenes()">
+            <span>🎞</span> Generate Scenes
+        </button>
+    </div>
+
+    <div class="panel-card" style="max-width:600px;margin-bottom:2rem;">
+        <div class="form-group">
+            <label>Logline / Story Summary</label>
+            <textarea class="form-textarea" id="scene-logline" rows="3"
+                placeholder="Paste your logline or describe your story premise..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Genre</label>
+            <select class="form-select" id="scene-genre">
+                <option>Drama</option>
+                <option>Sci-Fi</option>
+                <option>Thriller</option>
+                <option>Horror</option>
+                <option>Romance</option>
+                <option>Action</option>
+                <option>Comedy</option>
+            </select>
+        </div>
+        <button class="btn btn-primary generate-btn btn-glow" onclick="generateScenes()">
+            <span>🎞</span> Build Scene Structure
+        </button>
+    </div>
+
+    <!-- Scene Timeline -->
+    <div class="scene-timeline" id="scene-timeline"></div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    async function generateScenes() {
+        document.getElementById("loading-overlay").classList.remove("hidden");
+        try {
+            const res = await fetch("/api/generate/scenes", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    logline: document.getElementById("scene-logline").value,
+                    genre: document.getElementById("scene-genre").value
+                })
+            });
+            const data = await res.json();
+            renderScenes(data.scenes || []);
+            showToast("Scene structure generated!", "success");
+        } catch (e) { showToast("Failed to generate scenes.", "error"); }
+        finally { document.getElementById("loading-overlay").classList.add("hidden"); }
+    }
+
+    function renderScenes(scenes) {
+        const timeline = document.getElementById("scene-timeline");
+        timeline.innerHTML = "";
+        scenes.forEach((scene, i) => {
+            const item = document.createElement("div");
+            item.className = "scene-item";
+            item.style.animationDelay = `${i * 0.15}s`;
+            item.innerHTML = `
+      <div class="scene-connector">
+        <div class="scene-dot">${scene.icon || '●'}</div>
+        ${i < scenes.length - 1 ? '<div class="scene-line"></div>' : ''}
+      </div>
+      <div class="scene-card glass-card">
+        <div class="scene-header" onclick="toggleScene(this)">
+          <div>
+            <div class="scene-type">${scene.type}</div>
+            <div class="scene-title">${scene.title}</div>
+          </div>
+          <div class="scene-toggle-icon">▼</div>
+        </div>
+        <div class="scene-body">
+          <p>${scene.content}</p>
+          <div style="margin-top:1rem;">
+            <textarea class="form-textarea scene-notes" rows="3" placeholder="Add your notes for this scene..."></textarea>
+          </div>
+        </div>
+      </div>`;
+            timeline.appendChild(item);
+            setTimeout(() => item.classList.add("visible"), i * 150);
+        });
+    }
+
+    function toggleScene(header) {
+        const card = header.closest(".scene-card");
+        const body = card.querySelector(".scene-body");
+        const icon = header.querySelector(".scene-toggle-icon");
+        const isOpen = body.classList.toggle("open");
+        icon.textContent = isOpen ? "▲" : "▼";
+    }
+
+    // Auto-generate on load
+    window.addEventListener("load", generateScenes);
+</script>
+{% endblock %}

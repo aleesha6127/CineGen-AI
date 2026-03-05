@@ -1,0 +1,276 @@
+{% extends "app_layout.html" %}
+{% block title %}Create Story — CineGen AI{% endblock %}
+{% set active_page = 'create_story' %}
+
+{% block page_content %}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Create Cinematic Concept</h1>
+            <p class="page-sub">Describe your idea — AI builds the story structure.</p>
+        </div>
+    </div>
+
+    <div class="create-layout" id="create-layout">
+        <!-- Input Panel -->
+        <div class="create-input-panel">
+            <div class="panel-card">
+                <h2 class="panel-title">Your Idea</h2>
+                <div class="form-group">
+                    <label>Genre</label>
+                    <select class="form-select" id="genre">
+                        <option value="Drama">Drama</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Action">Action</option>
+                        <option value="Comedy">Comedy</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mood</label>
+                    <select class="form-select" id="mood">
+                        <option value="Dark">Dark</option>
+                        <option value="Hopeful">Hopeful</option>
+                        <option value="Tense">Tense</option>
+                        <option value="Melancholic">Melancholic</option>
+                        <option value="Epic">Epic</option>
+                        <option value="Mysterious">Mysterious</option>
+                        <option value="Uplifting">Uplifting</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Audience</label>
+                    <select class="form-select" id="audience">
+                        <option value="Adults">Adults (18+)</option>
+                        <option value="Young Adults">Young Adults (16–25)</option>
+                        <option value="General">General Audience</option>
+                        <option value="Festival">Festival Circuit</option>
+                        <option value="International">International</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Describe Your Idea</label>
+                    <textarea class="form-textarea" id="idea" rows="6"
+                        placeholder="A disgraced detective discovers the city's AI surveillance system has developed its own agenda — and it's been watching her..."></textarea>
+                </div>
+                <button class="btn btn-primary btn-full btn-glow generate-btn" id="generate-btn"
+                    onclick="generateConcept()">
+                    <span class="generate-icon">🎬</span>
+                    <span id="gen-btn-text">Generate Concept</span>
+                    <span id="gen-spinner" class="btn-spinner hidden"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="create-output-panel hidden" id="output-panel">
+            <div class="panel-card output-card">
+                <div class="output-header">
+                    <h2 class="panel-title">AI Concept Output</h2>
+                    <div class="output-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="saveProject()">✔ Save</button>
+                        <button class="btn btn-ghost btn-sm" onclick="generateConcept()">↻ Regenerate</button>
+                        <button class="btn btn-ghost btn-sm" onclick="exportPDF()">📄 Export PDF</button>
+                    </div>
+                </div>
+
+                <div class="output-sections" id="output-sections">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module">
+    import { getFirestore, collection, addDoc, doc, updateDoc, increment, serverTimestamp }
+        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    window.generateConcept = async function () {
+        const btn = document.getElementById("generate-btn");
+        const genText = document.getElementById("gen-btn-text");
+        const spinner = document.getElementById("gen-spinner");
+        const overlay = document.getElementById("loading-overlay");
+
+        genText.classList.add("hidden");
+        spinner.classList.remove("hidden");
+        btn.disabled = true;
+        overlay.classList.remove("hidden");
+
+        const payload = {
+            genre: document.getElementById("genre").value,
+            mood: document.getElementById("mood").value,
+            audience: document.getElementById("audience").value,
+            idea: document.getElementById("idea").value,
+        };
+
+        try {
+            const res = await fetch("/api/generate/story", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            window.__lastConcept = data;
+            renderOutput(data);
+
+            // Update user AI usage in Firestore
+            const user = window.__currentUser;
+            if (user) {
+                try {
+                    const { doc: firestoreDoc, updateDoc: firestoreUpdate, increment: firestoreIncrement } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+                    await firestoreUpdate(firestoreDoc(window.__db, "users", user.uid), { ai_usage: firestoreIncrement(1) });
+                } catch (e) { }
+            }
+            showToast("Concept generated!", "success");
+        } catch (err) {
+            showToast("Generation failed. Please try again.", "error");
+        } finally {
+            genText.classList.remove("hidden");
+            spinner.classList.add("hidden");
+            btn.disabled = false;
+            overlay.classList.add("hidden");
+        }
+    };
+
+    function renderOutput(data) {
+        const panel = document.getElementById("output-panel");
+        const sections = document.getElementById("output-sections");
+        panel.classList.remove("hidden");
+        document.getElementById("create-layout").classList.add("split-active");
+
+        const arc = Array.isArray(data.story_arc) ? data.story_arc : [];
+        const chars = Array.isArray(data.characters) ? data.characters : [];
+
+        sections.innerHTML = `
+    <div class="output-block" style="--delay:0.1s">
+      <div class="output-block-label">🎯 LOGLINE</div>
+      <div class="output-block-content typewriter">${data.logline || ''}</div>
+    </div>
+    <div class="output-block" style="--delay:0.3s">
+      <div class="output-block-label">📖 SYNOPSIS</div>
+      <div class="output-block-content">${data.synopsis || ''}</div>
+    </div>
+    <div class="output-block" style="--delay:0.5s">
+      <div class="output-block-label">👥 CHARACTERS</div>
+      <div class="output-mini-chars">
+        ${chars.map(c => `<div class="mini-char-pill"><strong>${c.name}</strong> · ${c.archetype}</div>`).join('')}
+      </div>
+    </div>
+    <div class="output-block" style="--delay:0.7s">
+      <div class="output-block-label">📈 STORY ARC</div>
+      <div class="output-arc">
+        ${arc.map((s, i) => `<div class="arc-beat"><span class="arc-num">${i + 1}</span><span>${s}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="output-block" style="--delay:0.9s">
+      <div class="output-block-label">🎨 VISUAL STYLE</div>
+      <div class="output-block-content">${data.visual_style || ''}</div>
+    </div>
+    <div class="meta-tags" style="margin-top:1rem;">
+      <span class="tag tag-red">${data.genre || ''}</span>
+      <span class="tag tag-blue">${data.mood || ''}</span>
+      <span class="tag tag-dim">${data.target_audience || ''}</span>
+    </div>`;
+
+        // Animate blocks in
+        setTimeout(() => {
+            sections.querySelectorAll(".output-block").forEach((el, i) => {
+                setTimeout(() => el.classList.add("visible"), i * 150);
+            });
+        }, 50);
+    }
+
+    window.saveProject = async function () {
+        const user = window.__currentUser;
+        if (!user || !window.__lastConcept) return;
+        const data = window.__lastConcept;
+        try {
+            const { collection: col, addDoc: add, serverTimestamp: sts, doc: firestoreDoc, updateDoc: firestoreUpdate, increment: inc, setDoc: firestoreSet }
+                = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+
+            let id = window.__currentProjectId;
+            if (id) {
+                // Update existing
+                await firestoreSet(firestoreDoc(window.__db, "scripts", id), {
+                    ...data,
+                    updated_at: sts()
+                }, { merge: true });
+                showToast("Project updated!", "success");
+            } else {
+                // New project
+                const docRef = await add(col(window.__db, "scripts"), {
+                    uid: user.uid, title: data.title || "Untitled Concept",
+                    genre: data.genre, mood: data.mood, logline: data.logline,
+                    synopsis: data.synopsis, characters: data.characters,
+                    story_arc: data.story_arc, visual_style: data.visual_style,
+                    target_audience: data.target_audience,
+                    created_at: sts(), updated_at: sts()
+                });
+                window.__currentProjectId = docRef.id;
+                await firestoreUpdate(firestoreDoc(window.__db, "users", user.uid), { scripts_count: inc(1), favorite_genre: data.genre });
+                showToast("Project saved!", "success");
+            }
+        } catch (e) { console.error(e); showToast("Error saving project.", "error"); }
+    };
+
+    window.exportPDF = function () {
+        const id = window.__currentProjectId;
+        if (id) {
+            window.location.href = `/api/scripts/${id}/pdf`;
+            showToast("Generating PDF...", "success");
+        } else if (window.__lastConcept) {
+            // If not saved yet, we still use the basic text export or prompt to save
+            const d = window.__lastConcept;
+            const content = `CINEGEN AI — CONCEPT EXPORT\n\nLOGLINE:\n${d.logline}\n\nSYNOPSIS:\n${d.synopsis}\n\nVISUAL STYLE:\n${d.visual_style}\n\nSTORY ARC:\n${d.story_arc.join('\n')}\n\nCharacters:\n${d.characters.map(c => `${c.name} — ${c.archetype}`).join('\n')}`;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'cinegen-concept.txt'; a.click();
+            showToast("Exported as TXT (Save to get PDF)", "info");
+        }
+    };
+
+    // Load existing script if ID in URL
+    document.addEventListener("authReady", async ({ detail: { user } }) => {
+        window.__currentUser = user;
+        const urlParams = new URLSearchParams(window.location.search);
+        const scriptId = urlParams.get('id');
+
+        if (scriptId) {
+            const overlay = document.getElementById("loading-overlay");
+            overlay.classList.remove("hidden");
+            try {
+                const { doc: firestoreDoc, getDoc: firestoreGet } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+                const scriptSnap = await firestoreGet(firestoreDoc(window.__db, "scripts", scriptId));
+
+                if (scriptSnap.exists()) {
+                    const data = scriptSnap.data();
+                    window.__currentProjectId = scriptId;
+                    window.__lastConcept = data;
+
+                    // Pre-fill inputs
+                    if (data.genre) document.getElementById("genre").value = data.genre;
+                    if (data.mood) document.getElementById("mood").value = data.mood;
+                    if (data.target_audience) document.getElementById("audience").value = data.target_audience;
+                    if (data.logline) {
+                        // We don't have the original idea text stored, but we can show the result
+                    }
+
+                    renderOutput(data);
+                    document.querySelector(".page-title").textContent = "Refine Cinematic Concept";
+                    document.querySelector(".page-sub").textContent = `Editing: ${data.title || 'Untitled Project'}`;
+                }
+            } catch (e) {
+                console.error("Error loading script:", e);
+                showToast("Failed to load project", "error");
+            } finally {
+                overlay.classList.add("hidden");
+            }
+        }
+    });
+</script>
+{% endblock %}

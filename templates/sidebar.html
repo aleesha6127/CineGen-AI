@@ -1,0 +1,66 @@
+<!-- Reusable Sidebar + App Shell Template -->
+<!-- Usage: {% include 'sidebar.html' %} inside a dashboard page's {% block body %} -->
+<!-- NOTE: This partial opens .app-shell and .main-content but does NOT close them.
+     The including page is responsible for closing </div><!-- main-content --> and </div><!-- app-shell --> -->
+<div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-logo">
+                <span class="brand-icon">🎬</span>
+                <span class="brand-name">CineGen <span class="brand-accent">AI</span></span>
+            </a>
+            <button class="sidebar-close" id="sidebar-close" aria-label="Close sidebar">✕</button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="sidebar-link {% if active_page == 'dashboard' %}active{% endif %}">
+                <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+            </a>
+            <a href="/create-story" class="sidebar-link {% if active_page == 'create_story' %}active{% endif %}">
+                <span class="nav-icon">📝</span><span class="nav-label">Create Story</span>
+            </a>
+            <a href="/my-scripts" class="sidebar-link {% if active_page == 'my_scripts' %}active{% endif %}">
+                <span class="nav-icon">📂</span><span class="nav-label">My Scripts</span>
+            </a>
+            <a href="/characters" class="sidebar-link {% if active_page == 'characters' %}active{% endif %}">
+                <span class="nav-icon">👥</span><span class="nav-label">Characters</span>
+            </a>
+            <a href="/scene-builder" class="sidebar-link {% if active_page == 'scene_builder' %}active{% endif %}">
+                <span class="nav-icon">🎞</span><span class="nav-label">Scene Builder</span>
+            </a>
+            <a href="/soundtrack" class="sidebar-link {% if active_page == 'soundtrack' %}active{% endif %}">
+                <span class="nav-icon">🎵</span><span class="nav-label">Soundtrack</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/admin" class="sidebar-link {% if active_page == 'admin' %}active{% endif %} sidebar-link-admin">
+                <span class="nav-icon">🧑‍💼</span><span class="nav-label">Admin</span>
+            </a>
+            <a href="/settings" class="sidebar-link {% if active_page == 'settings' %}active{% endif %}">
+                <span class="nav-icon">⚙</span><span class="nav-label">Settings</span>
+            </a>
+            <button class="sidebar-link sidebar-logout" onclick="window.__signOut && window.__signOut()">
+                <span class="nav-icon">🚪</span><span class="nav-label">Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Sidebar Backdrop (mobile) -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Open sidebar">
+                <span></span><span></span><span></span>
+            </button>
+            <div class="topbar-right">
+                <div class="topbar-user">
+                    <div class="user-avatar" id="user-avatar">{{ (user.name or 'U')[0]|upper }}</div>
+                    <span class="user-name" id="user-name">{{ user.name or 'Filmmaker' }}</span>
+                </div>
+            </div>
+        </header>

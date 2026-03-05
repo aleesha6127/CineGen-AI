@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}CineGen AI — Turn Ideas Into Cinema{% endblock %}
+{% block meta_description %}AI-powered script and soundtrack assistant for modern storytellers and filmmakers.{%
+endblock %}
+
+{% block body %}
+<!-- NAV -->
+<nav class="landing-nav" id="landing-nav">
+    <div class="nav-brand">
+        <span class="brand-icon">🎬</span>
+        <span class="brand-name">CineGen <span class="brand-accent">AI</span></span>
+    </div>
+    <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        {% if user %}
+        <a href="/dashboard" class="btn btn-primary">Dashboard</a>
+        {% else %}
+        <a href="/login" class="btn btn-ghost">Sign In</a>
+        <a href="/register" class="btn btn-primary">Get Started</a>
+        {% endif %}
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav-overlay" id="mobile-nav-overlay">
+    <div class="mobile-nav-menu">
+        <a href="#features" onclick="closeMobileNav()">Features</a>
+        <a href="#how-it-works" onclick="closeMobileNav()">How It Works</a>
+        <a href="/login">Sign In</a>
+        <a href="/register" class="btn btn-primary" style="text-align:center;margin-top:1rem;">Get Started</a>
+    </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+    <div class="hero-noise"></div>
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-content">
+        <div class="hero-badge">✦ AI-Powered Pre-Production Studio</div>
+        <h1 class="hero-title">
+            Turn Ideas<br />Into <span class="text-gradient">Cinema.</span>
+        </h1>
+        <p class="hero-subtitle">
+            AI-powered script and soundtrack assistant for modern storytellers.<br />
+            From logline to final scene — all in one cinematic workspace.
+        </p>
+        <div class="hero-cta">
+            <a href="/register" class="btn btn-primary btn-lg btn-glow">Get Started Free</a>
+            <a href="#how-it-works" class="btn btn-ghost btn-lg">
+                <span class="play-icon">▶</span> How It Works
+            </a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat"><span class="stat-num">5</span><span class="stat-label">AI Tools</span></div>
+            <div class="stat-divider"></div>
+            <div class="stat"><span class="stat-num">∞</span><span class="stat-label">Story Concepts</span></div>
+            <div class="stat-divider"></div>
+            <div class="stat"><span class="stat-num">1</span><span class="stat-label">Workspace</span></div>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="hero-card-stack">
+            <div class="hero-card card-back-2"></div>
+            <div class="hero-card card-back-1"></div>
+            <div class="hero-card card-main">
+                <div class="card-top-bar">
+                    <span class="dot dot-red"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                    <span class="card-title-bar">concept_001.cin</span>
+                </div>
+                <div class="card-content-preview">
+                    <div class="preview-label">LOGLINE</div>
+                    <div class="preview-text">"In a fractured near-future city, a disgraced detective must confront the
+                        AI she built — before it erases her entirely."</div>
+                    <div class="preview-label" style="margin-top:1rem;">GENRE</div>
+                    <div class="preview-tags">
+                        <span class="tag tag-red">Sci-Fi</span>
+                        <span class="tag tag-blue">Thriller</span>
+                    </div>
+                    <div class="preview-label" style="margin-top:1rem;">VISUAL STYLE</div>
+                    <div class="preview-text preview-muted">Desaturated neon, inspired by Blade Runner 2049.</div>
+                    <div class="preview-bar-anim">
+                        <div class="bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+    <div class="section-header">
+        <span class="section-tag">✦ FEATURES</span>
+        <h2 class="section-title">Everything a Storyteller Needs</h2>
+        <p class="section-sub">Five precision-built AI tools, one seamless creative workflow.</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🎬</div>
+            <h3>Story Generator</h3>
+            <p>Transform a raw idea into a structured cinematic concept — complete with logline, synopsis, story arc,
+                and visual style.</p>
+            <a href="/register" class="feature-link">Try Now →</a>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">👥</div>
+            <h3>Character Builder</h3>
+            <p>Develop rich, psychologically complex characters with motivations, internal conflicts, and story roles
+                defined by AI.</p>
+            <a href="/register" class="feature-link">Try Now →</a>
+        </div>
+        <div class="feature-card feature-card-accent">
+            <div class="feature-icon">🎞</div>
+            <h3>Scene Architect</h3>
+            <p>Build a complete five-act scene breakdown — from opening image to final resolution — with narrative
+                guidance at each stage.</p>
+            <a href="/register" class="feature-link">Try Now →</a>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💬</div>
+            <h3>Dialogue Studio</h3>
+            <p>Craft authentic character dialogue grounded in voice, subtext, and emotional truth. No generic lines.</p>
+            <a href="/register" class="feature-link">Try Now →</a>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎵</div>
+            <h3>Soundtrack Assistant</h3>
+            <p>Receive a complete scoring brief — score style, instrumentation, tempo, key, and reference composers
+                tailored to your film's mood.</p>
+            <a href="/register" class="feature-link">Try Now →</a>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works" id="how-it-works">
+    <div class="section-header">
+        <span class="section-tag">✦ PROCESS</span>
+        <h2 class="section-title">Three Steps to Your Story</h2>
+    </div>
+    <div class="steps-timeline">
+        <div class="step-item">
+            <div class="step-number">01</div>
+            <div class="step-line"></div>
+            <div class="step-body">
+                <h3>Enter Your Idea</h3>
+                <p>Describe your concept in any form — a single sentence, a genre, a mood, a scene. Raw, rough, or
+                    refined.</p>
+            </div>
+        </div>
+        <div class="step-item">
+            <div class="step-number">02</div>
+            <div class="step-line"></div>
+            <div class="step-body">
+                <h3>AI Structures Your Story</h3>
+                <p>CineGen AI analyses your input and returns a complete pre-production package — logline, characters,
+                    scenes, and score brief.</p>
+            </div>
+        </div>
+        <div class="step-item">
+            <div class="step-number">03</div>
+            <div class="step-line last"></div>
+            <div class="step-body">
+                <h3>Refine & Export</h3>
+                <p>Edit, regenerate, and save your project. Export as PDF, share with collaborators, or continue
+                    developing in-app.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+    <div class="cta-glow"></div>
+    <h2>Ready to Create Something Cinematic?</h2>
+    <p>Join filmmakers using CineGen AI to accelerate their pre-production workflow.</p>
+    <a href="/register" class="btn btn-primary btn-lg btn-glow">Start Creating — It's Free</a>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-brand">
+        <span class="brand-icon">🎬</span>
+        <span class="brand-name">CineGen <span class="brand-accent">AI</span></span>
+        <p>AI-powered pre-production studio for modern storytellers.</p>
+    </div>
+    <div class="footer-links">
+        <a href="#">About</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+        <a href="#">GitHub</a>
+    </div>
+    <div class="footer-copy">© 2024 CineGen AI. All rights reserved.</div>
+</footer>
+
+<script>
+    // Hamburger menu
+    const hamburger = document.getElementById("hamburger");
+    const overlay = document.getElementById("mobile-nav-overlay");
+    hamburger.addEventListener("click", () => {
+        overlay.classList.toggle("active");
+        hamburger.classList.toggle("active");
+    });
+    function closeMobileNav() {
+        overlay.classList.remove("active");
+        hamburger.classList.remove("active");
+    }
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeMobileNav();
+    });
+
+    // Nav scroll effect
+    const nav = document.getElementById("landing-nav");
+    window.addEventListener("scroll", () => {
+        nav.classList.toggle("scrolled", window.scrollY > 50);
+    });
+
+    // Smooth scroll for anchors
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener("click", (e) => {
+            const target = document.querySelector(a.getAttribute("href"));
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: "smooth" });
+                closeMobileNav();
+            }
+        });
+    });
+
+    // Intersection observer for animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
+    }, { threshold: 0.15 });
+    document.querySelectorAll(".feature-card, .step-item").forEach(el => observer.observe(el));
+</script>
+{% endblock %}

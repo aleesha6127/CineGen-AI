@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}CineGen AI{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}AI-powered script and soundtrack assistant for modern filmmakers.{% endblock %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% block body %}{% endblock %}
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay hidden">
+  <div class="loading-inner">
+    <div class="film-reel">
+      <div class="reel-ring"></div>
+      <div class="reel-ring"></div>
+      <div class="reel-ring"></div>
+      <div class="reel-center">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h2v2H4V4zm0 4h2v2H4V8zm0 4h2v2H4v-2zm0 4h2v2H4v-2zM18 4h2v2h-2V4zm0 4h2v2h-2V8zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zM8 2h8v20H8V2z"/></svg>
+      </div>
+    </div>
+    <p class="loading-text">Generating your cinematic concept<span class="dots">...</span></p>
+  </div>
+</div>
+
+<!-- Firebase Client SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+  const firebaseConfig = {{ firebase | tojson }};
+  const firebaseApp = initializeApp(firebaseConfig);
+  const auth = getAuth(firebaseApp);
+  const db = getFirestore(firebaseApp);
+  const analytics = getAnalytics(firebaseApp);
+
+  window.__firebaseApp = firebaseApp;
+  window.__auth = auth;
+  window.__db = db;
+
+  // Auth state listener
+  onAuthStateChanged(auth, (user) => {
+    window.__currentUser = user;
+    document.dispatchEvent(new CustomEvent("authReady", { detail: { user } }));
+  });
+
+  // Expose signOut
+  window.__signOut = () => signOut(auth).then(() => {
+    fetch("/api/auth/logout", { method: "POST" }).finally(() => {
+      window.location.href = "/";
+    });
+  });
+</script>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

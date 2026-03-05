@@ -1,0 +1,612 @@
+{% set is_admin_page = True %}
+{% extends "app_layout.html" %}
+
+{% block title %}Admin Console | CineGen AI{% endblock %}
+
+{% block page_content %}
+<div id="admin-dashboard" class="fade-in" style="animation: fadeIn 0.8s ease;">
+    <!-- Header -->
+    <div class="page-header"
+        style="background: rgba(22, 22, 30, 0.4); padding: 2rem; border-radius: var(--radius-lg); margin-bottom: 2.5rem; border: 1px solid var(--border);">
+        <div style="display:flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div>
+                <h1 class="page-title" style="font-size: 2.5rem; margin: 0;">Studio <span
+                        class="text-gradient">Control</span></h1>
+                <p class="page-sub" style="margin-top: 0.5rem; opacity: 0.8;">Creative oversight and platform
+                    intelligence</p>
+            </div>
+            <div class="admin-badge">
+                Admin Session Active
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Tab -->
+    <section id="tab-overview" class="admin-tab-content">
+        <div class="stats-grid"
+            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2.5rem;">
+            <!-- Script Metrics -->
+            <div class="panel-card" style="padding: 1.5rem; border-left: 4px solid var(--accent-red);">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Total Scripts</div>
+                        <div class="stat-card-num" id="stat-scripts" style="font-size: 2rem; font-weight: 800;">0</div>
+                    </div>
+                    <div style="font-size: 2rem; opacity: 0.5;">📝</div>
+                </div>
+            </div>
+            <div class="panel-card" style="padding: 1.5rem; border-left: 4px solid #E57373;">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Today's Output</div>
+                        <div class="stat-card-num" id="stat-today" style="font-size: 2rem; font-weight: 800;">0</div>
+                    </div>
+                    <div style="font-size: 2rem; opacity: 0.5;">⚡</div>
+                </div>
+            </div>
+            <!-- User Metrics -->
+            <div class="panel-card" style="padding: 1.5rem; border-left: 4px solid var(--accent-blue);">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Registered Users</div>
+                        <div class="stat-card-num" id="stat-users" style="font-size: 2rem; font-weight: 800;">0</div>
+                    </div>
+                    <div style="font-size: 2rem; opacity: 0.5;">👥</div>
+                </div>
+            </div>
+            <div class="panel-card" style="padding: 1.5rem; border-left: 4px solid #4FC3F7;">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Active Today</div>
+                        <div class="stat-card-num" id="stat-active" style="font-size: 2rem; font-weight: 800;">0</div>
+                    </div>
+                    <div style="font-size: 2rem; opacity: 0.5;">📈</div>
+                </div>
+            </div>
+            <!-- Creative Metrics -->
+            <div class="panel-card" style="padding: 1.5rem; border-left: 4px solid #7B61FF;">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Top Genre</div>
+                        <div class="stat-card-num" id="stat-genre"
+                            style="font-size: 1.25rem; font-weight: 800; color: #7B61FF;">-</div>
+                    </div>
+                    <div style="font-size: 2rem; opacity: 0.5;">🎬</div>
+                </div>
+            </div>
+            <div class="panel-card" style="padding: 1.5rem; border-left: 4px solid #FFD54F;">
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Most Used Mood</div>
+                        <div class="stat-card-num" id="stat-mood"
+                            style="font-size: 1.25rem; font-weight: 800; color: #FFD54F;">-</div>
+                    </div>
+                    <div style="font-size: 2rem; opacity: 0.5;">🎨</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem;">
+            <div class="panel-card">
+                <h3 class="panel-title">Generation Trends</h3>
+                <div style="height: 300px;"><canvas id="trendChart"></canvas></div>
+            </div>
+            <div class="panel-card">
+                <h3 class="panel-title">Genre Popularity</h3>
+                <div style="height: 300px;"><canvas id="genreChart"></canvas></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Users Tab -->
+    <section id="tab-users" class="admin-tab-content hidden">
+        <div class="panel-card">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 class="panel-title" style="margin:0; border:0;">User Registry</h3>
+                <input type="text" id="search-users" placeholder="Search filmmakers..." class="form-input"
+                    style="max-width: 320px; background: rgba(0,0,0,0.2);" onkeyup="filterUsers()">
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User Profile</th>
+                            <th>Role</th>
+                            <th>Scripts Created</th>
+                            <th>Status</th>
+                            <th>JoinedDate</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr>
+                            <td colspan="6" class="table-empty">Initializing workspace...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts Tab -->
+    <section id="tab-scripts" class="admin-tab-content hidden">
+        <div class="panel-card">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 class="panel-title" style="margin:0; border:0;">Production Ledger</h3>
+                <div style="display:flex; gap:1rem;">
+                    <select id="ledger-genre" class="form-select" style="min-width:150px; background: rgba(0,0,0,0.2);"
+                        onchange="refreshScripts()">
+                        <option value="">All Genres</option>
+                        <option>Drama</option>
+                        <option>Sci-Fi</option>
+                        <option>Action</option>
+                        <option>Horror</option>
+                        <option>Thriller</option>
+                        <option>Romance</option>
+                    </select>
+                    <select id="ledger-mood" class="form-select" style="min-width:150px; background: rgba(0,0,0,0.2);"
+                        onchange="refreshScripts()">
+                        <option value="">All Moods</option>
+                        <option>Dark</option>
+                        <option>Hopeful</option>
+                        <option>Tense</option>
+                        <option>Epic</option>
+                        <option>Mysterious</option>
+                        <option>Melancholic</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Production Title</th>
+                            <th>Genre</th>
+                            <th>Tone</th>
+                            <th>Studio Member</th>
+                            <th style="text-align:right;">Inventory</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scripts-tbody">
+                        <tr>
+                            <td colspan="5" class="table-empty">Loading production ledger...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analytics Tab -->
+    <section id="tab-analytics" class="admin-tab-content hidden">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="panel-card">
+                <h3 class="panel-title">Mood Sentiment Analysis</h3>
+                <div style="height: 350px;"><canvas id="moodChart"></canvas></div>
+            </div>
+            <div class="panel-card" style="background: linear-gradient(135deg, rgba(58, 134, 255, 0.05), transparent);">
+                <h3 class="panel-title">Studio AI Performance</h3>
+                <div style="padding: 1rem;">
+                    <div style="margin-bottom: 2rem;">
+                        <div
+                            style="display:flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                            <span>Compute Efficiency</span>
+                            <span>94%</span>
+                        </div>
+                        <div
+                            style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                            <div style="width: 94%; height: 100%; background: var(--accent-blue);"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 2rem;">
+                        <div
+                            style="display:flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                            <span>Character Depth Score</span>
+                            <span>88%</span>
+                        </div>
+                        <div
+                            style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                            <div style="width: 88%; height: 100%; background: #7B61FF;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Settings Tab -->
+    <section id="tab-settings" class="admin-tab-content hidden">
+        <div class="panel-card" style="max-width: 800px;">
+            <h3 class="panel-title">Laboratory Configuration</h3>
+            <p style="opacity:0.6; margin-bottom:2rem;">Manage AI parameters and global studio rules.</p>
+
+            <div style="display:grid; gap:1.5rem;">
+                <div class="setting-item"
+                    style="display:flex; justify-content:space-between; align-items:center; padding-bottom:1.5rem; border-bottom:1px solid var(--border);">
+                    <div>
+                        <div style="font-weight:700;">Story GPT Resonance</div>
+                        <div style="font-size:0.8rem; opacity:0.5;">Control the creative variance of script generation.
+                        </div>
+                    </div>
+                    <input type="range" min="0" max="100" value="85" style="accent-color: var(--accent-red);">
+                </div>
+                <div class="setting-item"
+                    style="display:flex; justify-content:space-between; align-items:center; padding-bottom:1.5rem; border-bottom:1px solid var(--border);">
+                    <div>
+                        <div style="font-weight:700;">Deep Soundtrack Synthesis</div>
+                        <div style="font-size:0.8rem; opacity:0.5;">Enable multi-instrumental AI composition
+                            orchestration.</div>
+                    </div>
+                    <div class="toggle-switch">Enabled</div>
+                </div>
+                <button class="btn btn-primary btn-sm" style="width:fit-content;">Apply Changes</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Side Drawer -->
+<div id="script-drawer" class="script-drawer">
+    <div class="drawer-header">
+        <h2 id="drawer-title" style="margin:0; font-family:'Outfit';">Script Details</h2>
+        <button onclick="closeDrawer()" class="drawer-close">✕</button>
+    </div>
+    <div id="drawer-meta" style="margin-bottom: 2rem; display:flex; gap:1rem; flex-wrap:wrap;"></div>
+    <div class="drawer-content" id="drawer-content"></div>
+</div>
+<div id="drawer-overlay" class="drawer-overlay" onclick="closeDrawer()"></div>
+
+<style>
+    .admin-tab-content.hidden {
+        display: none;
+    }
+
+    .text-gradient {
+        background: linear-gradient(135deg, var(--accent-red), var(--accent-blue));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .script-drawer {
+        position: fixed;
+        top: 0;
+        right: -600px;
+        width: 600px;
+        height: 100vh;
+        background: #09090D;
+        border-left: 1px solid var(--border);
+        z-index: 2000;
+        transition: right 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .script-drawer.open {
+        right: 0;
+    }
+
+    .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .drawer-content {
+        flex: 1;
+        overflow-y: auto;
+        color: var(--text-secondary);
+        line-height: 2;
+        font-family: 'Inter', sans-serif;
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+    }
+
+    .drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        visibility: hidden;
+        z-index: 1999;
+        transition: all 0.4s;
+    }
+
+    .drawer-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-active {
+        background: rgba(0, 212, 170, 0.1);
+        color: #00D4AA;
+        border: 1px solid rgba(0, 212, 170, 0.2);
+    }
+
+    .status-blocked {
+        background: rgba(229, 9, 20, 0.1);
+        color: var(--accent-red);
+        border: 1px solid rgba(229, 9, 20, 0.2);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let allUsers = [];
+    let allScripts = [];
+    let charts = {};
+
+    function animateValue(id, start, end, duration) {
+        if (typeof end !== 'number') {
+            document.getElementById(id).textContent = end;
+            return;
+        }
+        const obj = document.getElementById(id);
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    async function initWorkspace() {
+        try {
+            await Promise.all([refreshStats(), refreshUsers(), refreshScripts()]);
+        } catch (e) { console.error(e); }
+    }
+
+    async function refreshScripts() {
+        try {
+            const genre = document.getElementById('ledger-genre').value;
+            const mood = document.getElementById('ledger-mood').value;
+
+            const res = await fetch('/api/admin/scripts');
+            const data = await res.json();
+
+            allScripts = data.scripts || [];
+
+            let filtered = allScripts;
+            if (genre) filtered = filtered.filter(s => s.genre === genre);
+            if (mood) filtered = filtered.filter(s => s.mood === mood);
+
+            renderScriptsRegistry(filtered);
+        } catch (e) { console.error(e); }
+    }
+
+    async function refreshStats() {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+
+        animateValue('stat-scripts', 0, data.total_scripts, 1000);
+        animateValue('stat-today', 0, data.scripts_today, 1000);
+        document.getElementById('stat-genre').textContent = data.top_genre || '-';
+        document.getElementById('stat-mood').textContent = data.top_mood || '-';
+
+        renderCharts(data);
+    }
+
+    async function refreshUsers() {
+        const res = await fetch('/api/admin/users');
+        allUsers = await res.json();
+
+        animateValue('stat-users', 0, allUsers.length, 1000);
+        animateValue('stat-active', 0, allUsers.filter(u => !u.disabled).length, 1000);
+
+        renderUsersTable(allUsers);
+    }
+
+    function renderCharts(stats) {
+        Object.values(charts).forEach(c => c.destroy());
+
+        const baseOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#62627A' } },
+                x: { grid: { display: false }, ticks: { color: '#62627A' } }
+            }
+        };
+
+        charts.trend = new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: stats.trends.labels,
+                datasets: [{
+                    data: stats.trends.data,
+                    borderColor: '#E50914',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(229, 9, 20, 0.05)'
+                }]
+            },
+            options: baseOptions
+        });
+
+        charts.genre = new Chart(document.getElementById('genreChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(stats.genre_stats),
+                datasets: [{
+                    data: Object.values(stats.genre_stats),
+                    backgroundColor: '#3A86FF',
+                    borderRadius: 6
+                }]
+            },
+            options: baseOptions
+        });
+
+        charts.mood = new Chart(document.getElementById('moodChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(stats.mood_stats),
+                datasets: [{
+                    data: Object.values(stats.mood_stats),
+                    backgroundColor: ['#E50914', '#3A86FF', '#7B61FF', '#00D4AA', '#FFD60A'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    function renderUsersTable(users) {
+        const tbody = document.getElementById('users-tbody');
+        if (!users.length) {
+            tbody.innerHTML = `<tr><td colspan="6" class="table-empty">No filmmakers recorded.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = users.map(u => `
+            <tr>
+                <td style="padding: 1.25rem 1rem;">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <div style="width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-weight:800;">${(u.name || u.email)[0].toUpperCase()}</div>
+                        <div>
+                            <div style="font-weight:700;">${u.name || 'Anonymous'}</div>
+                            <div style="font-size:0.75rem;opacity:0.5;">${u.email}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-size:0.75rem; font-weight:700;">CONTRIBUTOR</td>
+                <td style="font-family:'Outfit'; font-weight:700;">${u.scripts_count || 0}</td>
+                <td><span class="status-badge ${u.disabled ? 'status-blocked' : 'status-active'}">${u.disabled ? 'Blocked' : 'Active'}</span></td>
+                <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : 'Legacy'}</td>
+                <td style="text-align:right; display:flex; gap:0.5rem; justify-content:flex-end;">
+                    <button class="action-btn" onclick="toggleBlock('${u.uid}', ${!u.disabled})">${u.disabled ? 'Unblock' : 'Restrict'}</button>
+                    <button class="action-btn" style="background:rgba(58,134,255,0.1); color:var(--accent-blue);" onclick="promoteUser('${u.uid}')">Promote</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderScriptsRegistry(scripts) {
+        const tbody = document.getElementById('scripts-tbody');
+        if (!scripts.length) {
+            tbody.innerHTML = `<tr><td colspan="5" class="table-empty" style="padding:4rem;">No productions found matching filters.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = scripts.map(s => `
+            <tr style="cursor: pointer;" onclick="viewScriptDetails('${s.id}')">
+                <td style="padding: 1.25rem 1rem;">
+                    <div style="font-weight: 700; color: var(--text-primary);">${s.title}</div>
+                    <div style="font-size: 0.7rem; opacity: 0.5;">ID: ${s.id.slice(0, 8)}...</div>
+                </td>
+                <td><span class="tag tag-red" style="font-size: 0.7rem;">${s.genre}</span></td>
+                <td><span class="tag tag-blue" style="font-size: 0.7rem;">${s.mood}</span></td>
+                <td style="font-size: 0.85rem; opacity: 0.8;">${s.creator_email}</td>
+                <td style="text-align:right;">
+                    <button class="action-btn" onclick="event.stopPropagation(); viewScriptDetails('${s.id}')">👁 View</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function filterUsers() {
+        const q = document.getElementById('search-users').value.toLowerCase();
+        const filtered = allUsers.filter(u =>
+            (u.name && u.name.toLowerCase().includes(q)) ||
+            (u.email && u.email.toLowerCase().includes(q))
+        );
+        renderUsersTable(filtered);
+    }
+
+    function promoteUser(uid) {
+        if (confirm('Initiate promotion to Executive Level Admin?')) {
+            fetch('/api/admin/promote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid })
+            }).then(r => r.json()).then(d => alert(d.message));
+        }
+    }
+
+    function viewScriptDetails(scriptId) {
+        const script = allScripts.find(s => s.id === scriptId);
+        if (!script) return;
+
+        document.getElementById('drawer-title').textContent = script.title;
+        document.getElementById('drawer-meta').innerHTML = `
+            <span class="tag tag-red">${script.genre}</span>
+            <span class="tag tag-blue">${script.mood}</span>
+            <span style="font-size:0.8rem; color:var(--text-muted);">${script.creator_email}</span>
+        `;
+        document.getElementById('drawer-content').textContent = script.content_preview + "\n\n(Full script accessible in Production Ledger)";
+
+        document.getElementById('script-drawer').classList.add('open');
+        document.getElementById('drawer-overlay').classList.add('visible');
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.admin-tab-content').forEach(t => t.classList.add('hidden'));
+        document.getElementById('tab-' + tabId).classList.remove('hidden');
+        document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+        // Find and highlight current nav item
+        event?.currentTarget?.classList.add('active');
+    }
+
+    async function toggleBlock(uid, block) {
+        if (!confirm(`Confirm account ${block ? 'suspension' : 'activation'}?`)) return;
+        const res = await fetch('/api/admin/toggle-block', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid, block })
+        });
+        if (res.ok) refreshUsers();
+    }
+
+    function closeDrawer() {
+        document.getElementById('script-drawer').classList.remove('open');
+        document.getElementById('drawer-overlay').classList.remove('visible');
+    }
+
+    window.switchTab = switchTab;
+    document.addEventListener('DOMContentLoaded', initWorkspace);
+</script>
+
+{% endblock %}

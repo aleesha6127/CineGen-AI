@@ -1,0 +1,254 @@
+{% extends "app_layout.html" %}
+{% block title %}My Scripts — CineGen AI{% endblock %}
+{% set active_page = 'my_scripts' %}
+
+{% block page_content %}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">My Scripts</h1>
+            <p class="page-sub">All your saved cinematic concepts in one place.</p>
+        </div>
+        <a href="/create-story" class="btn btn-primary btn-glow">+ New Story</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <select class="form-select filter-select" id="filter-genre" onchange="filterScripts()">
+            <option value="">All Genres</option>
+            <option>Drama</option>
+            <option>Sci-Fi</option>
+            <option>Thriller</option>
+            <option>Horror</option>
+            <option>Romance</option>
+            <option>Action</option>
+            <option>Comedy</option>
+        </select>
+        <select class="form-select filter-select" id="filter-mood" onchange="filterScripts()">
+            <option value="">All Moods</option>
+            <option>Dark</option>
+            <option>Hopeful</option>
+            <option>Tense</option>
+            <option>Melancholic</option>
+            <option>Epic</option>
+            <option>Mysterious</option>
+            <option>Uplifting</option>
+        </select>
+    </div>
+
+    <div class="projects-grid" id="scripts-grid">
+        <div class="empty-state" id="scripts-empty">
+            <div class="empty-icon">📂</div>
+            <div class="empty-title">No scripts yet</div>
+            <div class="empty-desc">Your saved stories will appear here.</div>
+            <a href="/create-story" class="btn btn-primary" style="margin-top:1rem;">Create Your First</a>
+        </div>
+    </div>
+</div>
+
+<!-- Script Detail Drawer (Mirroring Admin Aesthetics) -->
+<div id="script-drawer" class="script-drawer">
+    <div class="drawer-header">
+        <h2 id="drawer-title" style="margin:0; font-family:'Outfit';">Concept Details</h2>
+        <button onclick="closeDrawer()" class="drawer-close">✕</button>
+    </div>
+    <div id="drawer-meta" style="margin-bottom: 2rem; display:flex; gap:1rem; flex-wrap:wrap;"></div>
+
+    <div class="drawer-content" id="drawer-content">
+        <!-- Structured Content -->
+        <div id="drawer-body"></div>
+    </div>
+
+    <div class="drawer-footer"
+        style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border); display:flex; gap:1rem;">
+        <button id="drawer-download-btn" class="btn btn-primary btn-sm">📄 Download PDF</button>
+        <button id="drawer-edit-btn" class="btn btn-ghost btn-sm">📝 Edit in Workshop</button>
+    </div>
+</div>
+<div id="drawer-overlay" class="drawer-overlay" onclick="closeDrawer()"></div>
+
+<style>
+    .script-drawer {
+        position: fixed;
+        top: 0;
+        right: -600px;
+        width: 600px;
+        height: 100vh;
+        background: #09090D;
+        border-left: 1px solid var(--border);
+        z-index: 2000;
+        transition: right 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .script-drawer.open {
+        right: 0;
+    }
+
+    .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .drawer-close {
+        font-size: 1.5rem;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .drawer-content {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+
+    .drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        visibility: hidden;
+        z-index: 1999;
+        transition: all 0.4s;
+    }
+
+    .drawer-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .detail-section {
+        margin-bottom: 2rem;
+    }
+
+    .detail-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--accent-red);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
+    }
+
+    .detail-text {
+        font-size: 0.95rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block page_scripts %}
+<script type="module">
+    import { collection, query, where, orderBy, getDocs, doc, deleteDoc }
+        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    window.__allScripts = [];
+
+    document.addEventListener("authReady", async ({ detail: { user } }) => {
+        if (!user) { window.location.href = "/login"; return; }
+        try {
+            const q = query(collection(window.__db, "scripts"), where("uid", "==", user.uid), orderBy("updated_at", "desc"));
+            const snap = await getDocs(q);
+            snap.forEach(d => window.__allScripts.push({ id: d.id, ...d.data() }));
+            renderScripts(window.__allScripts);
+        } catch (e) { console.warn(e); }
+    });
+
+    function renderScripts(list) {
+        const grid = document.getElementById("scripts-grid");
+        const empty = document.getElementById("scripts-empty");
+        if (!list.length) { empty.style.display = "flex"; return; }
+        empty.style.display = "none";
+        grid.querySelectorAll(".project-card").forEach(c => c.remove());
+        list.forEach((s, i) => {
+            const card = document.createElement("div");
+            card.className = "project-card";
+            card.style.animationDelay = `${i * 0.08}s`;
+            card.onclick = () => viewDetails(s.id);
+            card.style.cursor = "pointer";
+            card.innerHTML = `
+      <div class="project-card-top">
+        <span class="tag tag-red">${s.genre || 'Drama'}</span>
+        <span class="tag tag-blue">${s.mood || 'Dark'}</span>
+      </div>
+      <h3 class="project-title">${s.title || 'Untitled'}</h3>
+      <p class="project-logline">${(s.logline || '').slice(0, 90)}...</p>
+      <div class="project-card-footer">
+        <span class="project-date">📅 ${s.created_at ? new Date(s.created_at.seconds * 1000).toLocaleDateString() : '—'}</span>
+        <div style="display:flex;gap:.5rem;">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteScript('${s.id}')">🗑</button>
+        </div>
+      </div>`;
+            grid.appendChild(card);
+            setTimeout(() => card.classList.add("visible"), i * 80);
+        });
+    }
+
+    window.viewDetails = function (id) {
+        const s = window.__allScripts.find(x => x.id === id);
+        if (!s) return;
+
+        document.getElementById('drawer-title').textContent = s.title || 'Untitled Concept';
+        document.getElementById('drawer-meta').innerHTML = `
+            <span class="tag tag-red">${s.genre}</span>
+            <span class="tag tag-blue">${s.mood}</span>
+            <span class="tag tag-dim">${s.target_audience || 'General'}</span>
+        `;
+
+        document.getElementById('drawer-body').innerHTML = `
+            <div class="detail-section">
+                <div class="detail-label">Logline</div>
+                <div class="detail-text">${s.logline}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label">Synopsis</div>
+                <div class="detail-text">${s.synopsis}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label">Narrative Arc</div>
+                <div class="detail-text">${s.story_arc ? s.story_arc.map((b, i) => `<div style="margin-bottom:0.5rem;">${i + 1}. ${b}</div>`).join('') : 'No arc defined.'}</div>
+            </div>
+            <div class="detail-section">
+                <div class="detail-label">Visual Grammar</div>
+                <div class="detail-text">${s.visual_style || 'Default cinematic style.'}</div>
+            </div>
+        `;
+
+        document.getElementById('drawer-download-btn').onclick = () => window.location.href = `/api/scripts/${s.id}/pdf`;
+        document.getElementById('drawer-edit-btn').onclick = () => window.location.href = `/create-story?id=${s.id}`;
+
+        document.getElementById('script-drawer').classList.add('open');
+        document.getElementById('drawer-overlay').classList.add('visible');
+    };
+
+    window.closeDrawer = () => {
+        document.getElementById('script-drawer').classList.remove('open');
+        document.getElementById('drawer-overlay').classList.remove('visible');
+    };
+
+    window.filterScripts = function () {
+        const genre = document.getElementById("filter-genre").value;
+        const mood = document.getElementById("filter-mood").value;
+        const filtered = window.__allScripts.filter(s => (!genre || s.genre === genre) && (!mood || s.mood === mood));
+        renderScripts(filtered);
+    };
+
+    window.deleteScript = async function (id) {
+        if (!confirm("Delete this script?")) return;
+        try {
+            await deleteDoc(doc(window.__db, "scripts", id));
+            window.__allScripts = window.__allScripts.filter(s => s.id !== id);
+            renderScripts(window.__allScripts);
+            showToast("Script deleted.", "success");
+        } catch (e) { showToast("Error deleting.", "error"); }
+    };
+</script>
+{% endblock %}

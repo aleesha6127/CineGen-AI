@@ -1,0 +1,166 @@
+{% extends "app_layout.html" %}
+{% block title %}Soundtrack Assistant — CineGen AI{% endblock %}
+{% set active_page = 'soundtrack' %}
+
+{% block page_content %}
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Soundtrack Assistant</h1>
+            <p class="page-sub">Get a complete scoring brief tailored to your film's emotional world.</p>
+        </div>
+    </div>
+
+    <!-- Waveform Background -->
+    <div class="waveform-bg" id="waveform-bg">
+        <canvas id="waveform-canvas"></canvas>
+    </div>
+
+    <div class="soundtrack-layout">
+        <!-- Input -->
+        <div class="panel-card soundtrack-input">
+            <h2 class="panel-title">Score Parameters</h2>
+            <div class="form-group">
+                <label>Film Genre</label>
+                <select class="form-select" id="st-genre">
+                    <option>Drama</option>
+                    <option>Sci-Fi</option>
+                    <option>Thriller</option>
+                    <option>Horror</option>
+                    <option>Romance</option>
+                    <option>Action</option>
+                    <option>Comedy</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Emotional Mood</label>
+                <select class="form-select" id="st-mood">
+                    <option value="Dark">Dark</option>
+                    <option value="Hopeful">Hopeful</option>
+                    <option value="Tense">Tense</option>
+                    <option value="Melancholic">Melancholic</option>
+                    <option value="Epic">Epic</option>
+                    <option value="Mysterious">Mysterious</option>
+                    <option value="Uplifting">Uplifting</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Key Scene</label>
+                <select class="form-select" id="st-scene">
+                    <option value="Opening Scene">Opening Scene</option>
+                    <option value="Inciting Incident">Inciting Incident</option>
+                    <option value="Rising Tension">Rising Tension</option>
+                    <option value="Climax">Climax</option>
+                    <option value="Resolution">Resolution</option>
+                </select>
+            </div>
+            <button class="btn btn-primary btn-full btn-glow generate-btn" onclick="generateSoundtrack()">
+                <span>🎵</span> Generate Score Brief
+            </button>
+        </div>
+
+        <!-- Output -->
+        <div class="soundtrack-output hidden" id="soundtrack-output">
+            <div class="panel-card">
+                <h2 class="panel-title">Score Brief</h2>
+                <div id="st-output-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    async function generateSoundtrack() {
+        document.getElementById("loading-overlay").classList.remove("hidden");
+        try {
+            const res = await fetch("/api/generate/soundtrack", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    genre: document.getElementById("st-genre").value,
+                    mood: document.getElementById("st-mood").value,
+                    key_scene: document.getElementById("st-scene").value
+                })
+            });
+            const data = await res.json();
+            renderSoundtrack(data);
+            showToast("Score brief generated!", "success");
+            startWaveform();
+        } catch (e) { showToast("Generation failed.", "error"); }
+        finally { document.getElementById("loading-overlay").classList.add("hidden"); }
+    }
+
+    function renderSoundtrack(data) {
+        const out = document.getElementById("soundtrack-output");
+        const content = document.getElementById("st-output-content");
+        out.classList.remove("hidden");
+
+        const instruments = (data.instruments || []).map(i => `<span class="tag tag-dim">${i}</span>`).join(' ');
+        const composers = (data.reference_composers || []).map(c => `<span class="composer-tag">${c}</span>`).join('');
+
+        content.innerHTML = `
+    <div class="st-block" style="--delay:0.1s">
+      <div class="st-label">🎼 Score Style</div>
+      <div class="st-content">${data.score_style || ''}</div>
+    </div>
+    <div class="st-block" style="--delay:0.3s">
+      <div class="st-label">🎸 Instrumentation</div>
+      <div class="st-instruments">${instruments}</div>
+    </div>
+    <div class="st-meta-row" style="--delay:0.4s">
+      <div class="st-meta"><div class="st-label">♩ Tempo</div><div class="st-meta-val">${data.tempo || ''}</div></div>
+      <div class="st-meta"><div class="st-label">🎵 Key</div><div class="st-meta-val">${data.key || ''}</div></div>
+    </div>
+    <div class="st-block" style="--delay:0.5s">
+      <div class="st-label">📍 Song Placement</div>
+      <div class="st-content">${data.song_placement || ''}</div>
+    </div>
+    <div class="st-block" style="--delay:0.7s">
+      <div class="st-label">💡 Emotional Intent</div>
+      <div class="st-content">${data.emotional_intent || ''}</div>
+    </div>
+    <div class="st-block" style="--delay:0.9s">
+      <div class="st-label">🎬 Reference Composers</div>
+      <div class="composers-row">${composers}</div>
+    </div>`;
+
+        setTimeout(() => {
+            content.querySelectorAll(".st-block, .st-meta-row").forEach((el, i) => {
+                setTimeout(() => el.classList.add("visible"), i * 150);
+            });
+        }, 50);
+    }
+
+    // Waveform animation
+    function startWaveform() {
+        const canvas = document.getElementById("waveform-canvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        let frame = 0;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "rgba(229,9,20,0.25)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            for (let x = 0; x < canvas.width; x++) {
+                const y = canvas.height / 2 + Math.sin((x + frame) * 0.05) * 20
+                    + Math.sin((x + frame) * 0.12) * 10
+                    + Math.sin((x * 0.03 + frame * 0.5)) * 30;
+                x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            frame += 1.5;
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+    window.addEventListener("load", () => {
+        startWaveform();
+    });
+</script>
+{% endblock %}
