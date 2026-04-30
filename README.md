@@ -31,6 +31,21 @@ CineGen AI is a comprehensive web application that helps writers, directors, and
 - Firebase project with Firestore enabled
 - Google Cloud service account key (for Firebase Admin SDK)
 
+## Screenshots
+
+### Landing Page
+![Landing Page](screenshots/landing-page.png)
+
+### Signup Page
+![Signup Page](screenshots/signup-page.png)
+
+### Features Section
+![Features Section](screenshots/features-section.png)
+
+### How It Works
+![How It Works](screenshots/how-it-works.png)
+
+
 ## Installation
 
 1. **Clone the repository:**
